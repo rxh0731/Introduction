@@ -1,0 +1,28 @@
+# Local Python environments and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local settings, logs and editor files
+.env
+.env.*
+!.env.example
+*.log
+.idea/
+.vscode/
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Temporary builds and test exports (portable executables are retained)
+build_portable/
+build/
+dist/
+*.spec
+autotest_output/
+test_output/
+output/
+check_scheme*.psd
+order_test.psd

@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1100" viewBox="0 0 1800 1100">
+  <defs>
+    <linearGradient id="top" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#243447"/><stop offset="1" stop-color="#38516a"/></linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%"><feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#778899" flood-opacity=".22"/></filter>
+    <pattern id="paper" width="18" height="18" patternUnits="userSpaceOnUse"><rect width="18" height="18" fill="#fffdf8"/><path d="M0 18L18 0M-4 4L4-4M14 22L22 14" stroke="#eadfcf" stroke-width=".65" opacity=".22"/></pattern>
+    <style>
+      .ui{font-family:'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#273444}
+      .title{font-size:26px;font-weight:600;fill:white}.section{font-size:19px;font-weight:600}.label{font-size:15px;fill:#536273}.small{font-size:13px;fill:#778494}.value{font-size:15px;fill:#202d3b}.tab{font-size:15px}.button{font-size:15px;font-weight:600}.mono{font-family:Consolas,monospace;font-size:13px;fill:#4a5664}
+      .line{stroke:#d5dce4;stroke-width:1}.input{fill:white;stroke:#bcc7d3;stroke-width:1}.card{fill:white;stroke:#d2dbe5;stroke-width:1}.accent{fill:#3e79b5}.red{stroke:#d94848;fill:none}.dash{stroke:#d94848;stroke-width:1;stroke-dasharray:4 4;fill:none}
+    </style>
+  </defs>
+  <rect width="1800" height="1100" fill="#edf1f5"/>
+  <rect x="0" y="0" width="1800" height="62" fill="url(#top)"/>
+  <text x="30" y="40" class="ui title">经文排版程序</text>
+  <text x="1545" y="38" class="ui" font-size="14" fill="#dbe7f1">文字来源：文字图片（字库）</text>
+
+  <!-- left panel -->
+  <rect x="20" y="82" width="500" height="952" rx="12" class="card" filter="url(#shadow)"/>
+  <rect x="38" y="100" width="464" height="245" rx="9" fill="#f9fbfd" stroke="#cbd6e1"/>
+  <text x="58" y="132" class="ui section">排版文字</text>
+  <rect x="358" y="111" width="126" height="34" rx="6" class="accent"/>
+  <text x="384" y="134" class="ui button" fill="white">载入文本</text>
+  <rect x="58" y="155" width="424" height="170" rx="5" class="input"/>
+  <text x="72" y="181" class="ui value">序言</text>
+  <text x="72" y="205" class="ui value">佛法東漸時輪轉動華夏大地照進一縷新的覺悟之光中</text>
+  <text x="72" y="229" class="ui value">華文明注入一股新的智慧源泉歷代中外高僧大德篳路</text>
+  <text x="72" y="253" class="ui value">#</text><text x="86" y="253" class="ui small">（分版）</text>
+  <text x="72" y="277" class="ui value">藍縷辛苦遭逢白馬馱經而來西行求法而去</text>
+  <text x="72" y="301" class="ui value">*樓宇烈謹識</text>
+  <text x="60" y="336" class="ui small">空格显示为方框；独立一行“#”表示分版</text>
+
+  <rect x="38" y="363" width="464" height="530" rx="9" fill="#f9fbfd" stroke="#cbd6e1"/>
+  <text x="58" y="395" class="ui section">参数设置</text>
+  <rect x="58" y="410" width="424" height="40" rx="6" fill="#e6edf5"/>
+  <rect x="350" y="412" width="130" height="36" rx="5" fill="white"/>
+  <text x="86" y="436" class="ui tab">标题</text><text x="178" y="436" class="ui tab">正文</text><text x="270" y="436" class="ui tab">尾题</text><text x="362" y="436" class="ui tab" fill="#2e6da4">整体</text>
+  <rect x="58" y="465" width="424" height="408" rx="6" class="card"/>
+  <text x="76" y="494" class="ui section" font-size="16">文字图片（字库）</text>
+  <text x="76" y="521" class="ui label">文字来源</text>
+  <circle cx="183" cy="516" r="7" fill="white" stroke="#8294a8"/><text x="198" y="521" class="ui value">电脑字体</text>
+  <circle cx="291" cy="516" r="7" fill="#3e79b5" stroke="#3e79b5"/><circle cx="291" cy="516" r="3" fill="white"/><text x="306" y="521" class="ui value">文字图片（字库）</text>
+  <text x="76" y="550" class="ui label">字库目录</text><rect x="150" y="532" width="247" height="31" rx="4" class="input"/><text x="160" y="553" class="ui mono">D:\Fonts\碑刻字库</text><rect x="405" y="532" width="60" height="31" rx="4" fill="#eef4fa" stroke="#aac0d5"/><text x="416" y="553" class="ui button" font-size="13">选择…</text>
+  <text x="76" y="586" class="ui label">命名方式</text><rect x="150" y="568" width="315" height="31" rx="4" class="input"/><text x="162" y="589" class="ui value">文件名首字为汉字</text><path d="M444 580l8 0-4 6z" fill="#718096"/>
+  <text x="76" y="622" class="ui label">图片对齐</text><rect x="150" y="604" width="315" height="31" rx="4" class="input"/><text x="162" y="625" class="ui value">裁切空白后与单元格居中</text><path d="M444 616l8 0-4 6z" fill="#718096"/>
+  <text x="76" y="658" class="ui label">缩放方式</text><rect x="150" y="640" width="315" height="31" rx="4" class="input"/><text x="162" y="661" class="ui value">原图尺寸＋全局缩放</text><path d="M444 652l8 0-4 6z" fill="#718096"/>
+  <text x="76" y="694" class="ui label">全局缩放(%)</text><rect x="150" y="676" width="96" height="31" rx="4" class="input"/><text x="208" y="697" class="ui value">100.00</text><text x="270" y="694" class="ui label">自动缩放</text><rect x="344" y="678" width="20" height="20" rx="3" fill="#3e79b5"/><path d="M348 688l5 5 9-10" stroke="white" stroke-width="2" fill="none"/><text x="375" y="694" class="ui value">启用</text>
+  <text x="76" y="731" class="ui label">自动放大阈值</text><rect x="177" y="712" width="65" height="29" rx="4" class="input"/><text x="210" y="732" class="ui value">75%</text><text x="254" y="731" class="ui label">目标</text><rect x="291" y="712" width="65" height="29" rx="4" class="input"/><text x="324" y="732" class="ui value">95%</text>
+  <text x="76" y="768" class="ui label">自动缩小阈值</text><rect x="177" y="749" width="65" height="29" rx="4" class="input"/><text x="210" y="769" class="ui value">150%</text><text x="254" y="768" class="ui label">目标</text><rect x="291" y="749" width="65" height="29" rx="4" class="input"/><text x="324" y="769" class="ui value">95%</text>
+  <text x="76" y="810" class="ui small">图片将保持宽高比；未找到的字保留空单元格</text>
+  <text x="76" y="840" class="ui small">同一文字存在多个字形时按扫描顺序轮换使用</text>
+
+  <rect x="38" y="911" width="464" height="105" rx="9" fill="#f9fbfd" stroke="#cbd6e1"/>
+  <text x="58" y="940" class="ui section" font-size="17">输出参数</text><text x="58" y="968" class="ui label">文件名</text><rect x="113" y="950" width="145" height="30" rx="4" class="input"/><text x="125" y="971" class="ui value">经文排版</text><text x="275" y="968" class="ui label">格式</text><rect x="316" y="950" width="87" height="30" rx="4" class="input"/><text x="329" y="971" class="ui value">PSD/PSB</text><rect x="410" y="950" width="73" height="30" rx="5" class="accent"/><text x="426" y="971" class="ui button" fill="white" font-size="13">导出</text>
+
+  <!-- preview -->
+  <rect x="545" y="82" width="1235" height="952" rx="12" class="card" filter="url(#shadow)"/>
+  <text x="1130" y="124" class="ui section" font-size="21">版面预览</text>
+  <rect x="572" y="101" width="120" height="32" rx="5" class="input"/><text x="594" y="122" class="ui button" fill="#315f8a">刷新预览</text>
+  <rect x="1630" y="101" width="120" height="32" rx="5" class="input"/><text x="1652" y="122" class="ui button" fill="#315f8a">适应窗口</text>
+  <rect x="572" y="153" width="1181" height="774" rx="6" fill="#cfd6dc"/>
+  <rect x="756" y="190" width="814" height="694" rx="2" fill="url(#paper)" stroke="#b7a999" stroke-width="2"/>
+  <!-- preview frame and grid -->
+  <rect x="803" y="235" width="718" height="596" class="red" stroke-width="3"/>
+  <g class="red" stroke-width="1.2" opacity=".9">
+    <path d="M840 260V805M877 260V805M914 260V805M951 260V805M988 260V805M1025 260V805M1062 260V805M1099 260V805M1136 260V805M1173 260V805M1210 260V805M1247 260V805M1284 260V805M1321 260V805M1358 260V805M1395 260V805M1432 260V805M1469 260V805"/>
+    <path d="M840 260H1500M840 297H1500M840 334H1500M840 371H1500M840 408H1500M840 445H1500M840 482H1500M840 519H1500M840 556H1500M840 593H1500M840 630H1500M840 667H1500M840 704H1500M840 741H1500M840 778H1500M840 815H1500"/>
+  </g>
+  <g class="dash" stroke-width="1"><path d="M858 260V815M895 260V815M932 260V815M969 260V815M1006 260V815M1043 260V815M1080 260V815M1117 260V815M1154 260V815M1191 260V815M1228 260V815M1265 260V815M1302 260V815M1339 260V815M1376 260V815M1413 260V815M1450 260V815M1487 260V815"/><path d="M840 278H1500M840 315H1500M840 352H1500M840 389H1500M840 426H1500M840 463H1500M840 500H1500M840 537H1500M840 574H1500M840 611H1500M840 648H1500M840 685H1500M840 722H1500M840 759H1500M840 796H1500"/></g>
+  <text x="1478" y="288" class="ui" font-size="27" fill="#252525">序</text><text x="1478" y="327" class="ui" font-size="27" fill="#252525">言</text><text x="1439" y="288" class="ui" font-size="23" fill="#252525">佛</text><text x="1439" y="327" class="ui" font-size="23" fill="#252525">法</text><text x="1402" y="288" class="ui" font-size="23" fill="#252525">東</text><text x="1402" y="327" class="ui" font-size="23" fill="#252525">漸</text><text x="1365" y="288" class="ui" font-size="23" fill="#252525">時</text><text x="1365" y="327" class="ui" font-size="23" fill="#252525">輪</text><text x="1328" y="288" class="ui" font-size="23" fill="#252525">轉</text><text x="1328" y="327" class="ui" font-size="23" fill="#252525">動</text><text x="1291" y="288" class="ui" font-size="23" fill="#252525">華</text><text x="1291" y="327" class="ui" font-size="23" fill="#252525">夏</text><text x="1254" y="288" class="ui" font-size="23" fill="#252525">大</text><text x="1254" y="327" class="ui" font-size="23" fill="#252525">地</text><text x="1217" y="288" class="ui" font-size="23" fill="#252525">照</text><text x="1217" y="327" class="ui" font-size="23" fill="#252525">進</text>
+  <text x="598" y="962" class="ui small">预览：字库图片模式　|　当前字库：D:\Fonts\碑刻字库　|　已匹配 97%　|　未找到 3 个字</text>
+  <text x="1645" y="962" class="ui small">缩放 32%</text>
+  <text x="598" y="990" class="ui small">提示：可拖动画布；Alt+滚轮缩放；空格显示为占位框</text>
+  <text x="1645" y="990" class="ui small">PNG　PSD/PSB　JPG</text>
+</svg>
