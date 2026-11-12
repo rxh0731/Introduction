@@ -2,6 +2,7 @@
 from PySide6.QtCore import Qt, QRectF, QPointF
 from PySide6.QtGui import QFont, QPen, QColor
 from layout_model import cells, place_text, complete_params
+from glyph_library import prepare_images
 
 
 def glyph_rect(params, glyph, scale, origin=(0, 0)):
@@ -25,8 +26,27 @@ def glyph_font(params, title, scale, region=None):
     return font
 
 
+def image_rect(params, glyph, placement, scale, origin=(0, 0)):
+    return placement.rect(glyph_rect(params, glyph, scale, origin), scale)
+
+
+def draw_glyph(painter, params, glyph, scale, origin=(0, 0), session=None):
+    if session is not None:
+        placement = session.placements.get(glyph)
+        if placement is None:
+            return
+        rect = image_rect(params, glyph, placement, scale, origin)
+        bitmap = session.qimage(placement, max(1, round(rect.width())), max(1, round(rect.height())))
+        painter.drawImage(rect, bitmap)
+    else:
+        painter.setFont(glyph_font(params, glyph.cell.title, scale, glyph.cell.region))
+        painter.drawText(glyph_rect(params, glyph, scale, origin), Qt.AlignCenter, glyph.text)
+
+
 def draw_layout(painter, params, text, scale, origin=(0, 0), *, draw_text=True):
     p = complete_params(params, text)
+    glyphs, warnings = place_text(p, text)
+    session = prepare_images(p, text, glyphs) if draw_text else None
     ox, oy = origin
     painter.fillRect(QRectF(ox, oy, p['canvas_w'] * scale, p['canvas_h'] * scale), QColor('white'))
     stroke_scale = scale / (p['dpi'] / 25.4)
@@ -41,11 +61,9 @@ def draw_layout(painter, params, text, scale, origin=(0, 0), *, draw_text=True):
             painter.setPen(cross)
             painter.drawLine(QPointF(x+w/2, y), QPointF(x+w/2, y+h))
             painter.drawLine(QPointF(x, y+h/2), QPointF(x+w, y+h/2))
-    glyphs, warnings = place_text(p, text)
     painter.setPen(QColor('black'))
     for glyph in glyphs if draw_text else ():
-        painter.setFont(glyph_font(p, glyph.cell.title, scale, glyph.cell.region))
-        painter.drawText(glyph_rect(p, glyph, scale, origin), Qt.AlignCenter, glyph.text)
+        draw_glyph(painter, p, glyph, scale, origin, session)
     if p.get('big_frame', True):
         painter.setPen(QPen(QColor('red'), p.get('frame_width', 1) * stroke_scale))
         painter.drawRect(QRectF(ox + (p['margin_l']-p['frame_l'])*scale,

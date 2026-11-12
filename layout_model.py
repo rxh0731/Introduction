@@ -44,11 +44,12 @@ def split_regions(text):
     return title, paragraphs[:tail_start], paragraphs[tail_start:]
 
 
-def flow_region(paragraphs, rows, cols, tail=False):
+def flow_region(paragraphs, rows, cols, tail=False, with_sources=False):
     """统一计算文字位置和分版边界；只有独立的 # 行是标记。"""
     positions, breaks = [], {}
     column, pending = 0, 0
     has_content, overflow = False, False
+    paragraph_number = 0
     for paragraph in paragraphs:
         if paragraph == '#':
             pending += 1
@@ -58,6 +59,7 @@ def flow_region(paragraphs, rows, cols, tail=False):
         if not paragraph:
             column += 1
             continue
+        paragraph_number += 1
         if column >= cols:
             overflow = True
             break
@@ -66,12 +68,15 @@ def flow_region(paragraphs, rows, cols, tail=False):
         pending = 0
         has_content = True
         row = (rows - len(paragraph) % rows) % rows if tail else 0
-        for char in paragraph:
+        for character_number, char in enumerate(paragraph, 1):
             if column >= cols:
                 overflow = True
                 break
             if char not in (' ', '\u3000'):
-                positions.append((row, column, char))
+                position = (row, column, char)
+                if with_sources:
+                    position += (paragraph_number, character_number)
+                positions.append(position)
             row += 1
             if row == rows:
                 column += 1
@@ -138,6 +143,12 @@ class Cell:
 class Glyph:
     cell: Cell
     text: str
+    paragraph: int = 0
+    character: int = 0
+
+    @property
+    def source_code(self):
+        return f'{self.paragraph}.{self.character}'
 
     @property
     def group_name(self):
@@ -198,11 +209,15 @@ def place_text(p, text):
         warnings.append(f'标题需要 {len(title)} 格，当前只有 {capacity} 格，请增加标题行数或列数。')
     for i, char in enumerate(title[:capacity]):
         if char not in (' ', '\u3000'):
-            glyphs.append(Glyph(cell_at(p, i % p['title_rows'], i // p['title_rows'], True), char))
-    body, _, overflow = flow_region(body_lines, p['rows'], p['cols'])
-    tail, _, tail_overflow = flow_region(tail_lines, p['tail_rows'], p['tail_cols'], tail=True)
-    glyphs.extend(Glyph(cell_at(p, row, col), char) for row, col, char in body)
-    glyphs.extend(Glyph(tail_cell_at(p, row, col), char) for row, col, char in tail)
+            glyphs.append(Glyph(cell_at(p, i % p['title_rows'], i // p['title_rows'], True), char, 1, i + 1))
+    body, _, overflow = flow_region(body_lines, p['rows'], p['cols'], with_sources=True)
+    tail, _, tail_overflow = flow_region(tail_lines, p['tail_rows'], p['tail_cols'], tail=True, with_sources=True)
+    # 编码独立于视觉列号：空行及 # 不算段落，空格占字序，尾题 * 不占字序。
+    body_count = sum(bool(line) and line != '#' for line in body_lines)
+    glyphs.extend(Glyph(cell_at(p, row, col), char, para + 1, index)
+                  for row, col, char, para, index in body)
+    glyphs.extend(Glyph(tail_cell_at(p, row, col), char, para + body_count + 1, index)
+                  for row, col, char, para, index in tail)
     if tail_overflow:
         warnings.append('尾题超出当前网格容量，请增加尾题行数或列数。')
     if overflow:

@@ -1,12 +1,13 @@
 import os, sys, re, time, logging, json
 from pathlib import Path
 from layout_model import SETTINGS_VERSION, TITLE_DEFAULTS, TAIL_DEFAULTS, OVERALL_DEFAULTS, migrate_settings, complete_params, place_text
-from layout_render import draw_layout, glyph_rect, glyph_font
+from layout_render import draw_layout, glyph_rect, glyph_font, image_rect
+from glyph_library import IMAGE_DEFAULTS, image_settings, prepare_images
 from PySide6.QtCore import Qt, QRectF, QPointF, QEvent, QTimer, QLocale
 from PySide6.QtGui import QFontDatabase, QImage, QPainter, QPen, QColor, QFont, QCursor, QPixmap, QTextCursor, QIntValidator, QDoubleValidator
 from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QHBoxLayout, QVBoxLayout,
     QFormLayout, QLabel, QPushButton, QTextEdit, QComboBox, QSpinBox, QDoubleSpinBox,
-    QCheckBox, QFileDialog, QLineEdit, QScrollArea, QMessageBox, QGroupBox, QProgressDialog, QGridLayout, QSplitter, QSizePolicy, QAbstractSpinBox, QTabWidget)
+    QCheckBox, QFileDialog, QLineEdit, QScrollArea, QMessageBox, QGroupBox, QProgressDialog, QGridLayout, QSplitter, QSizePolicy, QAbstractSpinBox, QTabWidget, QDialog, QDialogButtonBox)
 from PySide6.QtPrintSupport import QPrinter, QPrintDialog, QPrinterInfo
 
 MM = 300 / 25.4
@@ -16,7 +17,7 @@ logging.basicConfig(filename='export.log', level=logging.INFO, format='%(asctime
 # 后仍会优先读取工作目录中的参数设置.json。
 BUILTIN_SETTINGS = {
     'text': '\u3000序言\u3000\n佛法東漸時輪轉動華夏大地照進一縷新的覺悟之光中華文明注入一股新的智慧源泉歷代中外高僧大德篳路藍縷辛苦遭逢白馬馱經而來西行求法而去歷經千年心無疲厭殫精竭慮嘔心瀝血將佛法大小顯密各類經典移譯華夏日益完備裨使華夏總持佛典之全部總集佛法之大成\n然世事無常人間滄桑中國第一個佛教宗派天台宗宗祖南嶽慧思大師生逢身處動蕩分裂的南北朝深體正法住世之不易遂作立誓願文發願持令佛法不滅正法久住又誓願造金字佛經以期法寶不失法輪常轉\n華夏石刻肇自上古先民勒石記事銘功周秦碑碣漢魏摩崖歷六朝而趨盛經唐宋而達巔峰佛法初傳三寶漸全漢魏兩晉石窟營造佛像勒石鐫刻佛經即已發端南北朝際佛法漸趨隆盛刻經蔚然成風泰山金剛經摩崖石刻徂徠摩訶般若經文殊般若經石刻已成大觀\n慧思大師弟子隋靜琬上人承蒙師教以師志為己志學宗親師造金字佛經之精神借鏡已有石刻佛經之經驗發心將眾經大藏刻於石上以期佛說法藏經典長存不滅佛教法身慧命持久永續遂於隋大業年間於今北京房山地區鑿石室刻石經持續卅載直至圓寂刻成經石一百四十六塊計佛經十二部其後靜琬上人開創的刻經事業歷經唐宋遼金元明清千年續刻成為世界上規模最大歷史最久的石刻佛教大藏經共刻佛經千餘部三千餘卷石經版一萬五千餘塊總字數超三千五百多萬字是即北京房山石經誠為佛典之善品華夏之至寶清乾隆帝譽為千年法藏當代趙樸初大德贊為文化長城\n今欣聞家鄉浙江紹興上虞多寶講寺以校勘精審之房山石經善本為主要底本發心聚力歷時數年鐫刻雜阿含經小品般若經大品般若經金剛經心經解深密經法華經觀世音菩薩普門品楞嚴經觀世音菩薩耳根圓通章楞嚴咒大悲咒中論攝大乘論等經論密咒於金石之上成經版三百九十一塊凡五十七萬字講寺勒刻經典顯揚法義其心之誠其力之猛與先賢一脈相承一以貫之與古德同心同德同願同行深為震撼無比讚歎\n多寶講寺此次所選刻之經典選取大藏各部類精華涵蓋了阿含般若中觀法相唯識佛性如來藏密咒等大小顯密全體佛法乃大藏之精華和縮影尤以般若中觀類經典為主體般若乃全體佛法特別是大乘佛法之綱要樞紐與核心般若被稱為諸佛之母一切眾生之祖母大品般若曰摩訶般若波羅蜜是諸菩薩摩訶薩母能生諸佛攝持菩薩心經亦云三世諸佛依般若波羅蜜多故得阿耨多羅三藐三菩提究實而言佛陀在菩提樹下悟道就是以般若正智即通達一切法真如實性之無分別智觀照諸法實相證入真如實際開般若正智即開佛知見能見般若即為見佛\n講寺師祖海公上人一生持戒精嚴特重般若晚年深弘阿含講寺開山敏公上人繼以持戒為本更以弘揚般若為要務兼弘唯識俱舍又結合漢傳圓教大旨深契佛教中國化之精髓盡顯佛門大乘精神之內涵現任住持紹隆師門宗風引領大眾嚴守佛制戒律廣學般若奧義精勤修行護國利民令多寶清淨道場住持正法聞名於世可欽可贊今又發心效仿先德刻經於金石之上以期法寶永續法輪常轉實乃皆大歡喜之盛事吾人樂觀其成並期未來因緣具足之時刻經不斷增廣乃至蔚成一大藏存世永年恒護正法廣利群生\u3000樓宇烈謹識\n\n*佛暦二千五百七十年四月初四\u3000\n*農暦丙午年四月初四\u3000\u3000\u3000\u3000\u3000\n*西暦二千零廿六年五月廿日\u3000\u3000\n*文殊菩薩聖誕日於京西三不堂\u3000', 'dpi': 300, 'cell_h': 45.0, 'cell_w': 50.0, 'cols': 44,
-    'settings_version': SETTINGS_VERSION, **TITLE_DEFAULTS, **TAIL_DEFAULTS, **OVERALL_DEFAULTS,
+    'settings_version': SETTINGS_VERSION, **TITLE_DEFAULTS, **TAIL_DEFAULTS, **OVERALL_DEFAULTS, **IMAGE_DEFAULTS,
     'rows': 31, 'gap_r': 0.0, 'gap_c': 0.0, 'big': True, 'grid_visible': True,
     'grid_width': 5, 'cross_width': 2, 'frame_width': 10,
     'offset_x': 0.0, 'offset_y': 5.0, 'frames': [50.0]*4,
@@ -55,7 +56,12 @@ class Preview(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent); self.params = {}; self.text = ""; self.zoom = 1.0; self.pan = QPointF(0, 0); self.drag_pos = None; self.setMinimumSize(200, 200); self.setMouseTracking(True)
     def set_data(self, params, text):
-        self.params, self.text = complete_params(params, text), text
+        params = complete_params(params, text)
+        glyphs, _ = place_text(params, text)
+        session = prepare_images(params, text, glyphs)
+        if session is not None:
+            params['_image_session'] = session
+        self.params, self.text = params, text
         params = self.params
         self.zoom = 1.0
         if self.width() > 0:
@@ -65,8 +71,12 @@ class Preview(QWidget):
         self.update()
     def paintEvent(self, e):
         p = QPainter(self); p.fillRect(self.rect(), QColor("#d9d9d9"))
-        self.draw_layout(p, self.width(), self.height())
-        p.end()
+        try:
+            self.draw_layout(p, self.width(), self.height())
+        except (ValueError, OSError) as exc:
+            p.drawText(self.rect(), Qt.AlignCenter | Qt.TextWordWrap, str(exc))
+        finally:
+            p.end()
     def draw_layout(self, p, width, height, export=False):
         if not self.params: return
         scale = self.params['dpi'] / 25.4 if export else min(
@@ -113,20 +123,29 @@ def render_layout_image(params, text, width=None, *, draw_text=True):
     params = complete_params(params, text)
     _, warnings = place_text(params, text)
     if warnings: raise ValueError('\n'.join(warnings))
+    if draw_text:
+        session = prepare_images(params, text, place_text(params, text)[0])
+        if session is not None: params['_image_session'] = session
     width=round(params['canvas_w']*params['dpi']/25.4)
     height=round(params['canvas_h']*params['dpi']/25.4)
     image=QImage(width,height,QImage.Format_RGB32); image.fill(QColor('white'))
     if image.isNull(): raise MemoryError('无法分配完整输出画布')
     image.setDotsPerMeterX(round(params['dpi']/0.0254)); image.setDotsPerMeterY(round(params['dpi']/0.0254))
     painter=QPainter(image)
-    draw_layout(painter, params, text, params['dpi']/25.4, draw_text=draw_text)
-    painter.end()
+    try:
+        draw_layout(painter, params, text, params['dpi']/25.4, draw_text=draw_text)
+    finally:
+        painter.end()
     return image
 
 def export_layered_psd(params, text, path, compressed, progress):
     params = complete_params(params, text)
     glyphs, warnings = place_text(params, text)
     if warnings: raise ValueError('\n'.join(warnings))
+    session = prepare_images(params, text, glyphs)
+    if session is not None:
+        params['_image_session'] = session
+        glyphs = [glyph for glyph in glyphs if session.placements.get(glyph) is not None]
     from PIL import Image
     from psd_tools import PSDImage
     from psd_tools.constants import Compression
@@ -159,15 +178,21 @@ def export_layered_psd(params, text, path, compressed, progress):
     factor = params['dpi']/25.4
     total_layers = len(glyphs)
     for index, glyph in enumerate(glyphs):
-        rect = glyph_rect(params, glyph, factor)
-        w, h = rect.width(), rect.height()
-        tile = QImage(max(1, round(w)), max(1, round(h)), QImage.Format_ARGB32)
-        tile.fill(Qt.transparent)
-        painter = QPainter(tile)
-        painter.setFont(glyph_font(params, glyph.cell.title, factor, glyph.cell.region))
-        painter.setPen(QColor('black'))
-        painter.drawText(QRectF(0, 0, w, h), Qt.AlignCenter, glyph.text)
-        painter.end()
+        if session is not None:
+            placement = session.placements[glyph]
+            rect = image_rect(params, glyph, placement, factor)
+            tile = session.qimage(placement, max(1, round(rect.width())), max(1, round(rect.height())))
+            tile = tile.convertToFormat(QImage.Format_ARGB32)
+        else:
+            rect = glyph_rect(params, glyph, factor)
+            w, h = rect.width(), rect.height()
+            tile = QImage(max(1, round(w)), max(1, round(h)), QImage.Format_ARGB32)
+            tile.fill(Qt.transparent)
+            painter = QPainter(tile)
+            painter.setFont(glyph_font(params, glyph.cell.title, factor, glyph.cell.region))
+            painter.setPen(QColor('black'))
+            painter.drawText(QRectF(0, 0, w, h), Qt.AlignCenter, glyph.text)
+            painter.end()
         pil = Image.frombuffer('RGBA', (tile.width(), tile.height()), bytes(tile.bits()), 'raw', 'BGRA', 0, 1)
         group = groups.get(glyph.group_name)
         if group is None:
@@ -253,6 +278,9 @@ class MainWindow(QMainWindow):
             integer = key in ('title_cols', 'title_rows', 'tail_cols', 'tail_rows')
             minimum = 1 if integer else (0.01 if key.endswith(('cell_h','cell_w')) else (-100 if 'offset' in key else 0))
             specs.append((key,key,default,minimum,200 if integer else (100 if 'offset' in key else 2000),0 if integer else 2))
+        for key in ('image_scale_percent','image_enlarge_threshold','image_enlarge_target',
+                    'image_shrink_threshold','image_shrink_target','image_cell_percent'):
+            specs.append((key,key,IMAGE_DEFAULTS[key],0.01,10000,2))
         for key, attr, default, low, high, decimals in specs:
             control = self.num(default,low,high,decimals)
             self.controls[key] = control
@@ -266,6 +294,27 @@ class MainWindow(QMainWindow):
         self.outdir=QLineEdit(str(Path.cwd()/'output'))
         self.filename=QLineEdit('经文排版')
         self.format=QComboBox()
+        def options(items):
+            combo=QComboBox()
+            for label,value in items: combo.addItem(label,value)
+            combo.setMinimumContentsLength(8)
+            combo.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon)
+            return combo
+        self.text_source=options([('电脑字体','font'),('文字图片（字库）','images')])
+        self.library_dir=QLineEdit()
+        self.library_dir.setPlaceholderText('选择字库目录（包含子目录）')
+        self.library_naming=options([('文件名首字匹配','character'),('段落号.字序号','paragraph')])
+        self.image_alignment=options([('原图完整边界居中','full'),('裁切四周空白后居中','crop')])
+        self.image_scale_mode=options([('原图尺寸＋全局缩放','physical'),('相对单元格尺寸','cell')])
+        self.image_auto_scale=QCheckBox('自动缩放')
+        self.image_auto_scale.setChecked(True)
+        self.library_status=QLabel()
+        self.library_status.setWordWrap(True)
+        self.library_status.hide()
+        self._library_session=None
+        self._library_options=(self.text_source,self.library_naming,self.image_alignment,self.image_scale_mode)
+        for combo in self._library_options: combo.currentIndexChanged.connect(self.update_image_controls)
+        self.image_auto_scale.toggled.connect(self.update_image_controls)
         self.rebuild_ui()
         QApplication.instance().installEventFilter(self)
 
@@ -313,7 +362,11 @@ class MainWindow(QMainWindow):
             ('行距(mm)',self.tail_gap_r),('列距(mm)',self.tail_gap_c),
             ('文字偏移H(%)',self.tail_offset_x),('文字偏移V(%)',self.tail_offset_y),
             ('尾题间距(mm)',self.body_tail_gap)])
-        overall=QWidget(); tabs.addTab(overall,'整体')
+        overall=QWidget()
+        overall_scroll=QScrollArea(); overall_scroll.setWidgetResizable(True)
+        overall_scroll.setWidget(overall); overall_scroll.setFrameShape(QScrollArea.NoFrame)
+        overall_scroll.setMinimumHeight(285)
+        tabs.addTab(overall_scroll,'整体')
         grid=QGridLayout(overall)
         items=[
             ('画布 DPI',self.dpi),
@@ -332,6 +385,39 @@ class MainWindow(QMainWindow):
             for col,control in enumerate(controls,1):
                 control.setMinimumWidth(50); margins.addWidget(control,row,col)
         grid.addLayout(margins,3,0,1,4)
+        images=QGroupBox('文字来源与图片字库'); ig=QGridLayout(images)
+        ig.addWidget(QLabel('文字来源'),0,0); ig.addWidget(self.text_source,0,1,1,3)
+        self.library_panel=QWidget(); lg=QGridLayout(self.library_panel); lg.setContentsMargins(0,0,0,0)
+        lg.addWidget(QLabel('字库目录'),0,0); lg.addWidget(self.library_dir,0,1,1,2)
+        choose_library=QPushButton('选择…'); choose_library.clicked.connect(self.choose_library)
+        lg.addWidget(choose_library,0,3)
+        for row,(label,control) in enumerate((('命名方式',self.library_naming),
+                ('图片对齐',self.image_alignment),('缩放方式',self.image_scale_mode)),1):
+            lg.addWidget(QLabel(label),row,0); lg.addWidget(control,row,1,1,3)
+        self.physical_panel=QWidget(); pg=QGridLayout(self.physical_panel); pg.setContentsMargins(0,0,0,0)
+        pg.addWidget(QLabel('全局缩放(%)'),0,0); pg.addWidget(self.image_scale_percent,0,1)
+        pg.addWidget(self.image_auto_scale,0,2,1,2)
+        self.auto_panel=QWidget(); ag=QGridLayout(self.auto_panel); ag.setContentsMargins(0,0,0,0)
+        for row,(label,threshold,target) in enumerate((('放大阈值(%)',self.image_enlarge_threshold,self.image_enlarge_target),
+                                                    ('缩小阈值(%)',self.image_shrink_threshold,self.image_shrink_target))):
+            ag.addWidget(QLabel(label),row,0); ag.addWidget(threshold,row,1)
+            ag.addWidget(QLabel('目标(%)'),row,2); ag.addWidget(target,row,3)
+        pg.addWidget(self.auto_panel,1,0,1,4)
+        lg.addWidget(self.physical_panel,4,0,1,4)
+        self.cell_scale_panel=QWidget(); cg=QHBoxLayout(self.cell_scale_panel); cg.setContentsMargins(0,0,0,0)
+        cg.addWidget(QLabel('单元格比例(%)')); cg.addWidget(self.image_cell_percent); cg.addStretch()
+        lg.addWidget(self.cell_scale_panel,5,0,1,4)
+        hint=QLabel('编码：标题为第1段；空行和独立 # 不计段号；* 不计字序，空格计字序。\n原图缺少 DPI 时按 300 DPI；GIF/TIFF 多帧图片读取第1帧。')
+        hint.setWordWrap(True); hint.setStyleSheet('color: #657587; font-size: 11px;')
+        lg.addWidget(hint,6,0,1,4)
+        scan=QPushButton('重新扫描字库'); scan.clicked.connect(lambda: self.refresh(force_images=True))
+        details=QPushButton('查看匹配记录'); details.clicked.connect(self.show_library_report)
+        lg.addWidget(scan,7,0,1,2); lg.addWidget(details,7,2,1,2)
+        ig.addWidget(self.library_panel,1,0,1,4)
+        grid.addWidget(images,4,0,1,4)
+        grid.setRowStretch(5,1)
+        # 内层滚动区不向外传播内容最小宽度，显式保留全部参数的宽度。
+        overall_scroll.setMinimumWidth(overall.minimumSizeHint().width()+overall_scroll.verticalScrollBar().sizeHint().width())
         settings.setSizePolicy(QSizePolicy.Expanding,QSizePolicy.Fixed)
         stack.addWidget(settings)
         out=QGroupBox('输出参数'); g=QGridLayout(out)
@@ -361,6 +447,7 @@ class MainWindow(QMainWindow):
         self.grid_visible.toggled.connect(self.update_visibility); self.big.toggled.connect(self.update_visibility)
         vl.addLayout(header)
         self.layout_warning=QLabel(); self.layout_warning.setWordWrap(True); self.layout_warning.setStyleSheet('color: #b04000'); self.layout_warning.hide(); vl.addWidget(self.layout_warning)
+        vl.addWidget(self.library_status)
         content=QVBoxLayout(); content.addWidget(self.preview,1)
         fit=QPushButton('适应窗口'); fit.clicked.connect(self.fit_preview)
         print_button=QPushButton('打印'); print_button.clicked.connect(self.print_preview)
@@ -452,6 +539,65 @@ class MainWindow(QMainWindow):
     def choose_dir(self):
         d=QFileDialog.getExistingDirectory(self,'选择输出目录');
         if d: self.outdir.setText(d)
+    def choose_library(self):
+        directory=QFileDialog.getExistingDirectory(self,'选择文字图片字库目录',self.library_dir.text())
+        if directory:
+            self.library_dir.setText(directory)
+            self.refresh(force_images=True)
+    def update_image_controls(self):
+        if not hasattr(self,'library_panel'): return
+        images=self.text_source.currentData()=='images'
+        for control in (*self.fonts,self.fsize,self.title_size,self.tail_size): control.setEnabled(not images)
+        self.library_panel.setEnabled(images)
+        physical=self.image_scale_mode.currentData()=='physical'
+        self.physical_panel.setVisible(physical)
+        self.cell_scale_panel.setVisible(not physical)
+        self.auto_panel.setEnabled(self.image_auto_scale.isChecked())
+        if not images:
+            self.library_status.hide()
+        else:
+            self.library_status.setText('字库设置或排版文字修改后，请点击“刷新预览”；缺少图片的字将留空。')
+            self.library_status.show()
+    def prepare_params(self, params, text, *, force=False):
+        params=image_settings(params)
+        if params['text_source']!='images':
+            params.pop('_image_session',None)
+            return params
+        params['_image_session']=self._library_session
+        dialog=QProgressDialog('正在扫描字库并匹配文字图片…','取消',0,100,self)
+        dialog.setWindowTitle('字库检查'); dialog.setWindowModality(Qt.WindowModal)
+        def progress(completed,total):
+            if dialog.wasCanceled(): raise InterruptedError('已取消字库检查。')
+            dialog.setValue(round(completed*100/max(1,total)))
+            dialog.setLabelText(f'正在匹配文字图片 {completed}/{total}…')
+            QApplication.processEvents()
+        try:
+            session=prepare_images(params,text,place_text(params,text)[0],force=force,progress=progress)
+        finally:
+            dialog.close()
+        params['_image_session']=session
+        self._library_session=session
+        self.library_status.setText(session.summary)
+        self.library_status.show()
+        logging.info('字库匹配：%s；目录=%s',session.summary,session.index.root)
+        return params
+    def show_library_report(self):
+        self.refresh()
+        if (self._library_session is None or self.text_source.currentData()!='images'
+                or not self.preview.params): return
+        dialog=QDialog(self); dialog.setWindowTitle('字库分析与文字匹配记录'); dialog.resize(850,600)
+        layout=QVBoxLayout(dialog)
+        report=QTextEdit(); report.setReadOnly(True); report.setPlainText(self._library_session.report())
+        layout.addWidget(report)
+        save=QPushButton('保存记录…')
+        def save_report():
+            path,_=QFileDialog.getSaveFileName(dialog,'保存匹配记录','字库匹配记录.txt','文本文件 (*.txt)')
+            if path:
+                try: Path(path).write_text(report.toPlainText(),encoding='utf-8')
+                except OSError as exc: QMessageBox.warning(dialog,'保存失败',str(exc))
+        save.clicked.connect(save_report); layout.addWidget(save)
+        buttons=QDialogButtonBox(QDialogButtonBox.Close); buttons.rejected.connect(dialog.reject)
+        layout.addWidget(buttons); dialog.exec()
     def settings_path(self): return Path.cwd() / '参数设置.json'
     def settings_data(self):
         data={key:control.value() for key,control in self.controls.items()}
@@ -461,11 +607,15 @@ class MainWindow(QMainWindow):
                     font=self.fonts[0].currentData() or self.fonts[0].currentText(),
                     title_font=self.fonts[1].currentData() or self.fonts[1].currentText(),
                     tail_font=self.fonts[2].currentData() or self.fonts[2].currentText(),
+                    text_source=self.text_source.currentData(),library_dir=self.library_dir.text(),
+                    library_naming=self.library_naming.currentData(),image_alignment=self.image_alignment.currentData(),
+                    image_scale_mode=self.image_scale_mode.currentData(),image_auto_scale=self.image_auto_scale.isChecked(),
                     outdir=self.outdir.text(),filename=self.filename.text(),format=self.format.currentText())
         return data
     def save_settings(self):
         try:
             data=self.settings_data()
+            image_settings(data)
             self.settings_path().write_text(json.dumps(data,ensure_ascii=False,indent=2),encoding='utf-8')
         except (ValueError,OSError) as exc:
             QMessageBox.warning(self,'参数保存失败',str(exc)); return
@@ -473,12 +623,17 @@ class MainWindow(QMainWindow):
     def load_settings(self):
         try:
             path=self.settings_path()
-            data=migrate_settings(json.loads(path.read_text(encoding='utf-8'))) if path.exists() else dict(BUILTIN_SETTINGS)
+            data=migrate_settings(json.loads(path.read_text(encoding='utf-8-sig'))) if path.exists() else dict(BUILTIN_SETTINGS)
         except (ValueError,OSError) as exc:
             logging.warning('参数设置加载失败，使用内置默认值：%s',exc)
             data=dict(BUILTIN_SETTINGS)
         d=dict(BUILTIN_SETTINGS); d.update(data)
         self.text.setPlainText(d['text'])
+        self.library_dir.setText(d['library_dir'])
+        for combo,key in ((self.text_source,'text_source'),(self.library_naming,'library_naming'),
+                          (self.image_alignment,'image_alignment'),(self.image_scale_mode,'image_scale_mode')):
+            index=combo.findData(d[key]); combo.setCurrentIndex(max(0,index))
+        self.image_auto_scale.setChecked(d['image_auto_scale'])
         for key,control in self.controls.items(): control.setValue(d[key])
         self.big.setChecked(d['big']); self.grid_visible.setChecked(d['grid_visible'])
         for controls,key in ((self.frames,'frames'),(self.margins,'margins')):
@@ -489,6 +644,7 @@ class MainWindow(QMainWindow):
             if index >= 0: combo.setCurrentIndex(index)
         self.outdir.setText(os.path.expandvars(d['outdir']))
         self.filename.setText(d['filename']); self.format.setCurrentText(d['format'])
+        self.update_image_controls()
         self.refresh()
     def values(self):
         d=self.settings_data()
@@ -505,8 +661,8 @@ class MainWindow(QMainWindow):
             params=self.values(); text=self.text.toPlainText()
             _,warnings=place_text(params,text)
             if warnings: raise ValueError('\n'.join(warnings))
-            return params,text
-        except ValueError as exc:
+            return self.prepare_params(params,text),text
+        except (ValueError,OSError) as exc:
             QMessageBox.warning(self,'请检查排版参数',str(exc))
             return None
     def set_zoom(self,z): self.preview.zoom=max(.05,z); self.preview.update()
@@ -542,38 +698,55 @@ class MainWindow(QMainWindow):
         target=QRectF(page.left()+(page.width()-w)/2,page.top()+(page.height()-h)/2,w,h)
         painter.drawImage(target,image)
         painter.end()
-    def refresh(self):
+    def refresh(self, checked=False, *, force_images=True):
         try:
             params=self.values(); text=self.text.toPlainText()
+            params=self.prepare_params(params,text,force=force_images)
             self.preview.set_data(params,text)
             _,warnings=place_text(params,text)
             self.layout_warning.setText('\n'.join(warnings)); self.layout_warning.setVisible(bool(warnings))
-        except ValueError as exc:
+            if params['text_source']!='images': self.library_status.hide()
+        except (ValueError,OSError) as exc:
             self.layout_warning.setText(str(exc)); self.layout_warning.show()
+            self.preview.params={}; self.preview.update()
 
     def export(self):
         data=self.output_data()
         if data is None: return
         v,text=data
         started=time.perf_counter()
-        progress=QProgressDialog('正在导出…','取消',0,100,self); progress.setWindowTitle('导出进度'); progress.setWindowModality(Qt.WindowModal); progress.setAutoClose(False); progress.show(); QApplication.processEvents()
-        logging.info('开始导出 format=%s dpi=%s canvas_mm=%.1fx%.1f',self.format.currentText(),v['dpi'],v['canvas_w'],v['canvas_h']); progress.setValue(10); QApplication.processEvents(); logging.info('参数准备 %.3fs',time.perf_counter()-started)
-        iw,ih=2400,max(600,round(2400*v['canvas_h']/v['canvas_w'])); logging.info('创建导出画布 %sx%s 像素',iw,ih); img=QImage(1,1,QImage.Format_ARGB32); img.fill('white'); progress.setValue(35); QApplication.processEvents(); logging.info('画布准备 %.3fs',time.perf_counter()-started)
-        # 导出时只绘制预览画布区域，避免重复渲染整个窗口导致超长阻塞
-        self.preview.set_data(v,text); QApplication.processEvents()
-        # 在独立的等比例画布尺寸上重绘整幅版面，避免导出当前视口的局部内容。
-        img = render_layout_image(v, text) if self.format.currentText() in ('PNG', 'JPG') else None
-        progress.setValue(15); progress.setLabelText('正在准备完整画布…'); QApplication.processEvents(); logging.info('版面渲染 %.3fs',time.perf_counter()-started)
-        os.makedirs(self.outdir.text(),exist_ok=True); ext='psd' if self.format.currentText() == 'PSD/PSB' else self.format.currentText().lower(); path=Path(self.outdir.text())/(self.filename.text()+'.'+ext)
-        output_path = path
-        if ext in ('png', 'jpg'):
-            # PNG 的 quality=95 在 Qt 中会造成几乎不压缩；使用默认无损压缩。
-            saved = img.save(str(path), 'PNG') if ext == 'png' else img.save(str(path), 'JPG', 95)
-            if not saved: raise OSError('图片写入失败')
-        else:
-            output_path = export_layered_psd(v, text, path, True, progress)
-
-        logging.info('文件写入完成 %.3fs path=%s total=%.3fs',time.perf_counter()-started,output_path,time.perf_counter()-started); progress.setValue(100); progress.close(); QMessageBox.information(self,'导出完成',f'已输出：{output_path}\n耗时：{time.perf_counter()-started:.1f} 秒')
+        progress=QProgressDialog('正在准备完整画布…',None,0,100,self)
+        progress.setWindowTitle('导出进度'); progress.setWindowModality(Qt.WindowModal)
+        progress.setAutoClose(False); progress.show(); QApplication.processEvents()
+        try:
+            logging.info('开始导出 format=%s source=%s dpi=%s canvas_mm=%.1fx%.1f',
+                         self.format.currentText(),v['text_source'],v['dpi'],v['canvas_w'],v['canvas_h'])
+            progress.setValue(10); QApplication.processEvents()
+            os.makedirs(self.outdir.text(),exist_ok=True)
+            ext='psd' if self.format.currentText()=='PSD/PSB' else self.format.currentText().lower()
+            path=Path(self.outdir.text())/(self.filename.text()+'.'+ext)
+            if ext in ('png','jpg'):
+                img=render_layout_image(v,text)
+                logging.info('完整画布绘制 %.3fs',time.perf_counter()-started)
+                progress.setLabelText('正在压缩并写入图片…'); progress.setRange(0,0)
+                QApplication.processEvents()
+                # Qt 默认 PNG 压缩为无损压缩，不使用导致低压缩率的 quality=95。
+                saved=img.save(str(path),'PNG') if ext=='png' else img.save(str(path),'JPG',95)
+                if not saved: raise OSError('图片写入失败，请检查输出路径及可用空间。')
+                output_path=path
+            else:
+                output_path=export_layered_psd(v,text,path,True,progress)
+            if not output_path.is_file() or output_path.stat().st_size==0:
+                raise OSError('输出文件不存在或为空。')
+            logging.info('文件写入完成 %.3fs path=%s',time.perf_counter()-started,output_path)
+        except Exception as exc:
+            logging.exception('导出失败')
+            progress.close(); QMessageBox.warning(self,'导出失败',str(exc)); return
+        finally:
+            progress.close()
+        session=v.get('_image_session')
+        missing=f'\n缺少图片 {len(session.missing)} 字，已保留空单元格。' if session and session.missing else ''
+        QMessageBox.information(self,'导出完成',f'已输出：{output_path}\n耗时：{time.perf_counter()-started:.1f} 秒{missing}')
 
 if __name__=='__main__':
         app=QApplication(sys.argv); w=MainWindow(); w.showMaximized(); sys.exit(app.exec())
